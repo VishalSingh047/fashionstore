@@ -2,11 +2,11 @@ package com.fashionstore.fashionstore.service.impl;
 
 import com.fashionstore.fashionstore.dto.ProductRequest;
 import com.fashionstore.fashionstore.entity.Product;
+import com.fashionstore.fashionstore.exception.ResourceNotFoundException;
 import com.fashionstore.fashionstore.repository.ProductRepository;
 import com.fashionstore.fashionstore.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
@@ -37,12 +37,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product getProductById(Long id){
-        return productRepository.findById(id).orElseThrow(()-> new RuntimeException("Product not found"));
+        return productRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Product not found"));
     }
 
     @Override
     public String updateProduct(Long id, ProductRequest request){
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
+        Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         product.setName(request.getName());
         product.setDescription(request.getDescription());
@@ -58,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public String deleteProduct(Long id){
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
+        Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         productRepository.delete(product);
 
