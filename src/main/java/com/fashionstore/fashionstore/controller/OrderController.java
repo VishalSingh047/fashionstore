@@ -6,6 +6,7 @@ import com.fashionstore.fashionstore.entity.Order;
 import com.fashionstore.fashionstore.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,21 +18,25 @@ public class OrderController {
     private OrderService orderService;
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public String placeOrder(@Valid @RequestBody OrderRequest request){
         return orderService.placeOrder(request);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public List<Order> getAllOrders(){
         return orderService.getAllOrders();
     }
 
     @GetMapping("{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Order getOrderById(@PathVariable Long id){
         return orderService.getOrderById(id);
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public String updateOrderStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request){
         return orderService.updateOrderStatus(id, request);
     }

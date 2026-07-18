@@ -5,6 +5,7 @@ import com.fashionstore.fashionstore.entity.Product;
 import com.fashionstore.fashionstore.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public String addProduct(@Valid @RequestBody ProductRequest request){
         return productService.addProduct(request);
     }
@@ -31,11 +33,13 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request){
         return productService.updateProduct(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteProduct(@PathVariable Long id){
         return productService.deleteProduct(id);
     }

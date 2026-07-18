@@ -2,13 +2,12 @@ package com.fashionstore.fashionstore.controller;
 
 import com.fashionstore.fashionstore.dto.LoginRequest;
 import com.fashionstore.fashionstore.dto.RegisterRequest;
+import com.fashionstore.fashionstore.dto.UserProfileResponse;
 import com.fashionstore.fashionstore.service.UserAccountService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -24,5 +23,11 @@ public class UserAccountController {
     @PostMapping("/login")
     public String login(@Valid @RequestBody LoginRequest request){
         return userAccountService.login(request);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public UserProfileResponse getProfile(){
+        return userAccountService.getProfile();
     }
 }

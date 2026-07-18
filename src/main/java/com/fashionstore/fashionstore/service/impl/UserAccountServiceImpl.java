@@ -2,12 +2,15 @@ package com.fashionstore.fashionstore.service.impl;
 
 import com.fashionstore.fashionstore.dto.LoginRequest;
 import com.fashionstore.fashionstore.dto.RegisterRequest;
+import com.fashionstore.fashionstore.dto.UserProfileResponse;
 import com.fashionstore.fashionstore.entity.UserAccount;
 import com.fashionstore.fashionstore.enums.Role;
 import com.fashionstore.fashionstore.repository.UserAccountRepository;
 import com.fashionstore.fashionstore.security.JwtService;
 import com.fashionstore.fashionstore.service.UserAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class UserAccountServiceImpl implements UserAccountService {
 
     @Autowired
-    private UserAccountRepository userAccountRepo;
+    private UserAccountRepository userAccountRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -25,7 +28,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
     @Override
     public String register(RegisterRequest request) {
-        if (userAccountRepo.findByEmail(request.getEmail()).isPresent()) {
+        if (userAccountRepository.findByEmail(request.getEmail()).isPresent()) {
             return "Email already exists";
         }
 
@@ -37,14 +40,14 @@ public class UserAccountServiceImpl implements UserAccountService {
         user.setPhone(request.getPhone());
         user.setRole(Role.CUSTOMER);
 
-        userAccountRepo.save(user);
+        userAccountRepository.save(user);
 
         return "Registered Successfully";
     }
 
     @Override
     public String login(LoginRequest request){
-        UserAccount user = userAccountRepo.findByEmail(request.getEmail()).orElse(null);
+        UserAccount user = userAccountRepository.findByEmail(request.getEmail()).orElse(null);
 
         if(user == null){
             return "Invalid email";
@@ -55,6 +58,24 @@ public class UserAccountServiceImpl implements UserAccountService {
         }
 
         return jwtService.generateToken(user.getEmail());
+    }
+
+    @Override
+    public UserProfileResponse getProfile(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found"));
+
+        return new UserProfileResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getRole()
+        );
+
     }
 
 }
