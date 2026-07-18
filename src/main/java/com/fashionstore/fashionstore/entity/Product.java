@@ -24,7 +24,7 @@ public class Product {
     private Long id;
 
     @NotBlank(message = "Product name is required")
-    private String name;
+    private String productName;
 
     @Column(length = 1000)
     private String description;
@@ -43,4 +43,5 @@ public class Product {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
 }

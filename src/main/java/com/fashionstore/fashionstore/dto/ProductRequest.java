@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 
 public class ProductRequest {
     @NotBlank(message = "Name is required")
-    private String name;
+    private String productName;
 
     @NotBlank(message = "Description is required")
     private String description;
@@ -28,4 +28,5 @@ public class ProductRequest {
 
     @NotNull(message = "Stock is required")
     private Integer stock;
+
 }

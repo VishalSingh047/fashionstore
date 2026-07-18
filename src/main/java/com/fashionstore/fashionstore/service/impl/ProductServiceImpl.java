@@ -19,7 +19,7 @@ public class ProductServiceImpl implements ProductService {
     public String addProduct(ProductRequest request){
         Product product = new Product();
 
-        product.setName(request.getName());
+        product.setProductName(request.getProductName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setCategory(request.getCategory());
@@ -44,7 +44,7 @@ public class ProductServiceImpl implements ProductService {
     public String updateProduct(Long id, ProductRequest request){
         Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        product.setName(request.getName());
+        product.setProductName(request.getProductName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setCategory(request.getCategory());

@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import io.jsonwebtoken.Claims;
 
 @Service
 public class JwtService {
@@ -31,4 +32,25 @@ public class JwtService {
                 .signWith(getSignKey())
                 .compact();
     }
+
+    public String extractEmail(String token){
+        return extractAllClaims(token).getSubject();
+    }
+
+    public boolean isTokenValid(String token, String email){
+        return extractEmail(token).equals(email) && !isTokenExpired(token);
+    }
+
+    private boolean isTokenExpired(String token){
+        return extractAllClaims(token).getExpiration().before(new Date());
+    }
+
+    private Claims extractAllClaims(String token){
+        return Jwts.parser()
+                .verifyWith(getSignKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
 }
