@@ -24,7 +24,7 @@ public class ProductRequest {
     private String category;
 
     @NotBlank(message = "Image URL is required")
-    private String imageUrl;
+    private String imgUrl;
 
     @NotNull(message = "Stock is required")
     private Integer stock;

@@ -23,7 +23,7 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setCategory(request.getCategory());
-        product.setImgUrl(request.getImageUrl());
+        product.setImgUrl(request.getImgUrl());
         product.setStock(request.getStock());
 
         productRepository.save(product);
@@ -48,7 +48,7 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setCategory(request.getCategory());
-        product.setImgUrl(request.getImageUrl());
+        product.setImgUrl(request.getImgUrl());
         product.setStock(request.getStock());
 
         productRepository.save(product);

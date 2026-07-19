@@ -1,38 +1,22 @@
 package com.fashionstore.fashionstore.dto;
 
-import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 @Getter
 @Setter
 public class OrderRequest {
-    @NotBlank
-    private String customerName;
 
-    @Email
-    @NotBlank
-    private String customerEmail;
+    @NotNull(message = "Product Id is required")
+    private Long productId;
 
-    @NotBlank
-    private String customerPhone;
-
-    @NotBlank
-    private String deliveryAddress;
-
-    @NotBlank
-    private String productName;
-
-    @NotNull
-    @Positive
+    @NotNull(message = "Quantity is required")
+    @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
 
-    @NotNull
-    @Positive
-    private BigDecimal totalAmount;
+    @NotBlank(message = "Delivery Address is required")
+    private String deliveryAddress;
 }

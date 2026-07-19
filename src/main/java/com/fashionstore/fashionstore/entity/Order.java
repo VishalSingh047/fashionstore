@@ -15,15 +15,28 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Customer Details
     private String customerName;
     private String customerEmail;
     private String customerPhone;
+
+    // Delivery Details
     private String deliveryAddress;
+
+    // Product Details
+    private Long productId;
+
     private String productName;
+
+    private BigDecimal price;
+
     private Integer quantity;
+
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
