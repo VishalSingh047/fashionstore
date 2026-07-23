@@ -97,4 +97,16 @@ public class OrderServiceImpl implements OrderService {
 
         return "Order status updated successfully";
     }
+
+    @Override
+    public List<Order> getMyOrders() {
+
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        String email = authentication.getName();
+
+        return orderRepository.findByCustomerEmail(email);
+    }
 }

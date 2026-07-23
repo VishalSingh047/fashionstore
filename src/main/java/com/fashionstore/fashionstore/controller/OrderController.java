@@ -23,6 +23,12 @@ public class OrderController {
         return orderService.placeOrder(request);
     }
 
+    @GetMapping("/my-orders")
+    @PreAuthorize("isAuthenticated()")
+    public List<Order> getMyOrders() {
+        return orderService.getMyOrders();
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<Order> getAllOrders(){
@@ -40,4 +46,5 @@ public class OrderController {
     public String updateOrderStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request){
         return orderService.updateOrderStatus(id, request);
     }
+
 }

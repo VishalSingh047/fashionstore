@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 public class OrderRequest {
@@ -19,4 +21,71 @@ public class OrderRequest {
 
     @NotBlank(message = "Delivery Address is required")
     private String deliveryAddress;
+
+    @Getter
+    @Setter
+    public static class ProductRequest {
+
+
+        // Basic Information
+
+        @NotBlank(message = "Product name is required")
+        private String productName;
+
+
+        private String description;
+
+
+        @NotBlank(message = "Category is required")
+        private String category;
+
+
+        private String brand;
+
+
+
+        // Pricing
+
+        @NotNull(message = "Price is required")
+        private BigDecimal price;
+
+
+        private BigDecimal originalPrice;
+
+
+        private Integer discount;
+
+
+
+        // Single Piece Stock
+
+        @NotNull(message = "Stock is required")
+        private Integer stock;
+
+
+
+        // Size
+
+        private String size;
+
+
+
+        // Images
+
+        @NotBlank(message = "Image URL is required")
+        private String imgUrl;
+
+
+        private String imageGallery;
+
+
+
+        // Homepage Controls
+
+        private Boolean featured = false;
+
+
+        private Boolean newArrival = true;
+
+    }
 }
