@@ -31,6 +31,8 @@ public class ProductRequest {
 
     private Integer discount;
 
+    private Integer stock;
+
     private String size;
 
     private String imageGallery;

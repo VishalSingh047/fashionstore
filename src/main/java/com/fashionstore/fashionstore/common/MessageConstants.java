@@ -40,6 +40,21 @@ public final class MessageConstants {
     public static final String ORDER_FETCHED = "Order fetched successfully.";
     public static final String ORDERS_FETCHED = "Orders fetched successfully.";
 
+    // ================= WISHLIST =================
+
+    public static final String PRODUCT_ADDED_TO_WISHLIST = "Product added to wishlist successfully.";
+    public static final String PRODUCT_REMOVED_FROM_WISHLIST = "Product removed from wishlist successfully.";
+    public static final String WISHLIST_CLEARED = "Wishlist cleared successfully.";
+    public static final String WISHLIST_FETCHED = "Wishlist fetched successfully.";
+
+    // ================= REVIEWS =================
+
+    public static final String REVIEW_ADDED = "Review submitted successfully.";
+    public static final String REVIEW_DELETED = "Review deleted successfully.";
+    public static final String REVIEW_FETCHED = "Reviews fetched successfully.";
+    public static final String REVIEW_ALREADY_EXISTS = "You have already reviewed this product.";
+    public static final String REVIEW_NOT_FOUND = "Review not found.";
+
     // ================= GENERAL =================
 
     public static final String UNAUTHORIZED = "Unauthorized access.";

@@ -7,6 +7,8 @@ import com.fashionstore.fashionstore.dto.OrderResponse;
 import com.fashionstore.fashionstore.dto.PlaceOrderRequest;
 import com.fashionstore.fashionstore.entity.*;
 import com.fashionstore.fashionstore.enums.OrderStatus;
+import com.fashionstore.fashionstore.enums.PaymentMethod;
+import com.fashionstore.fashionstore.enums.PaymentStatus;
 import com.fashionstore.fashionstore.exception.ResourceNotFoundException;
 import com.fashionstore.fashionstore.repository.*;
 import com.fashionstore.fashionstore.security.UserPrincipal;
@@ -82,9 +84,29 @@ public class OrderServiceImpl implements OrderService {
             totalAmount = totalAmount.add(cartItem.getProduct().getPrice());
         }
 
+        // Parse Payment Method
+        PaymentMethod paymentMethod = PaymentMethod.COD;
+        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
+            try {
+                paymentMethod = PaymentMethod.valueOf(request.getPaymentMethod().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                paymentMethod = PaymentMethod.COD;
+            }
+        }
+
+        PaymentStatus paymentStatus = (paymentMethod == PaymentMethod.COD) ? PaymentStatus.PENDING : PaymentStatus.PAID;
+
         // Create Order
         Order order = new Order();
         order.setUser(user);
+        order.setShippingFullName(request.getFullName() != null ? request.getFullName() : user.getFullName());
+        order.setShippingPhone(request.getPhone() != null ? request.getPhone() : user.getPhone());
+        order.setShippingAddress(request.getAddress());
+        order.setCity(request.getCity());
+        order.setState(request.getState());
+        order.setPincode(request.getPincode());
+        order.setPaymentMethod(paymentMethod);
+        order.setPaymentStatus(paymentStatus);
         order.setStatus(OrderStatus.PENDING);
         order.setTotalAmount(totalAmount);
 
@@ -124,13 +146,7 @@ public class OrderServiceImpl implements OrderService {
         // Empty Cart
         cartItemRepository.deleteByCart(cart);
 
-        return new OrderResponse(
-                order.getId(),
-                responses,
-                totalAmount,
-                order.getStatus(),
-                order.getOrderedAt()
-        );
+        return mapToOrderResponse(order, responses);
     }
 
     @Override
@@ -157,14 +173,7 @@ public class OrderServiceImpl implements OrderService {
                         ));
             }
 
-            responses.add(
-                    new OrderResponse(
-                            order.getId(),
-                            itemResponses,
-                            order.getTotalAmount(),
-                            order.getStatus(),
-                            order.getOrderedAt()
-                    ));
+            responses.add(mapToOrderResponse(order, itemResponses));
         }
         return responses;
     }
@@ -195,13 +204,7 @@ public class OrderServiceImpl implements OrderService {
                             item.getPrice()
                     ));
         }
-        return new OrderResponse(
-                order.getId(),
-                itemResponses,
-                order.getTotalAmount(),
-                order.getStatus(),
-                order.getOrderedAt()
-        );
+        return mapToOrderResponse(order, itemResponses);
     }
 
     @Override
@@ -239,6 +242,16 @@ public class OrderServiceImpl implements OrderService {
                             order.getUser().getEmail(),
                             order.getUser().getPhone(),
 
+                            order.getShippingFullName(),
+                            order.getShippingPhone(),
+                            order.getShippingAddress(),
+                            order.getCity(),
+                            order.getState(),
+                            order.getPincode(),
+
+                            order.getPaymentMethod(),
+                            order.getPaymentStatus(),
+
                             itemResponses,
 
                             order.getTotalAmount(),
@@ -262,6 +275,9 @@ public class OrderServiceImpl implements OrderService {
             OrderStatus orderStatus =
                     OrderStatus.valueOf(status.toUpperCase());
             order.setStatus(orderStatus);
+            if (orderStatus == OrderStatus.DELIVERED && order.getPaymentMethod() == PaymentMethod.COD) {
+                order.setPaymentStatus(PaymentStatus.PAID);
+            }
 
             orderRepository.save(order);
             return MessageConstants.ORDER_STATUS_UPDATED;
@@ -269,5 +285,23 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException(MessageConstants.INVALID_ORDER_STATUS);
 
         }
+    }
+
+    private OrderResponse mapToOrderResponse(Order order, List<OrderItemResponse> itemResponses) {
+        return new OrderResponse(
+                order.getId(),
+                itemResponses,
+                order.getTotalAmount(),
+                order.getStatus(),
+                order.getShippingFullName(),
+                order.getShippingPhone(),
+                order.getShippingAddress(),
+                order.getCity(),
+                order.getState(),
+                order.getPincode(),
+                order.getPaymentMethod(),
+                order.getPaymentStatus(),
+                order.getOrderedAt()
+        );
     }
 }

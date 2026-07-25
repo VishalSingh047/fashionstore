@@ -1,6 +1,7 @@
 package com.fashionstore.fashionstore.service.impl;
 
 import com.fashionstore.fashionstore.common.MessageConstants;
+import com.fashionstore.fashionstore.dto.PageResponse;
 import com.fashionstore.fashionstore.dto.ProductRequest;
 import com.fashionstore.fashionstore.dto.ProductResponse;
 import com.fashionstore.fashionstore.dto.UpdateProductRequest;
@@ -8,10 +9,17 @@ import com.fashionstore.fashionstore.entity.Product;
 import com.fashionstore.fashionstore.exception.ResourceNotFoundException;
 import com.fashionstore.fashionstore.repository.ProductRepository;
 import com.fashionstore.fashionstore.service.ProductService;
+import com.fashionstore.fashionstore.specification.ProductSpecification;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -36,9 +44,8 @@ public class ProductServiceImpl implements ProductService {
         product.setOriginalPrice(request.getOriginalPrice());
         product.setDiscount(request.getDiscount());
 
-        // Thrift Inventory Logic
-        // Every product is unique, so default stock = 1
-        product.setStock(1);
+        // Inventory Logic
+        product.setStock(request.getStock() != null ? request.getStock() : 1);
         product.setSoldOut(false);
 
         // Size
@@ -57,12 +64,10 @@ public class ProductServiceImpl implements ProductService {
                 request.getNewArrival() != null && request.getNewArrival()
         );
 
-
         productRepository.save(product);
 
         return MessageConstants.PRODUCT_CREATED;
     }
-
 
 
     @Override
@@ -74,6 +79,47 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    @Override
+    public PageResponse<ProductResponse> getProducts(
+            String query,
+            String category,
+            String brand,
+            String size,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Boolean inStock,
+            Boolean featured,
+            Boolean newArrival,
+            int page,
+            int sizeParam,
+            String sortBy,
+            String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, sizeParam, sort);
+
+        Specification<Product> spec = ProductSpecification.filterProducts(
+                query, category, brand, size, minPrice, maxPrice, inStock, featured, newArrival
+        );
+
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
+
+        List<ProductResponse> content = productPage.getContent().stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        return new PageResponse<>(
+                content,
+                productPage.getNumber(),
+                productPage.getSize(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages(),
+                productPage.isLast()
+        );
+    }
 
 
     @Override
@@ -152,8 +198,6 @@ public class ProductServiceImpl implements ProductService {
 
         return MessageConstants.PRODUCT_DELETED;
     }
-
-
 
 
     private ProductResponse mapToResponse(Product product) {

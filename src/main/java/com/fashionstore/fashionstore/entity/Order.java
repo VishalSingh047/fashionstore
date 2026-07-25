@@ -1,6 +1,8 @@
 package com.fashionstore.fashionstore.entity;
 
 import com.fashionstore.fashionstore.enums.OrderStatus;
+import com.fashionstore.fashionstore.enums.PaymentMethod;
+import com.fashionstore.fashionstore.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,6 +29,27 @@ public class Order {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private UserAccount user;
+
+    // Shipping Details
+    private String shippingFullName;
+
+    private String shippingPhone;
+
+    @Column(length = 1000)
+    private String shippingAddress;
+
+    private String city;
+
+    private String state;
+
+    private String pincode;
+
+    // Payment Details
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod = PaymentMethod.COD;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     // Total order amount
     @Column(nullable = false)
