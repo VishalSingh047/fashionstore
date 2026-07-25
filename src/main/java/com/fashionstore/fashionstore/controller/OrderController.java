@@ -1,11 +1,13 @@
 package com.fashionstore.fashionstore.controller;
 
-import com.fashionstore.fashionstore.dto.OrderRequest;
-import com.fashionstore.fashionstore.dto.UpdateOrderStatusRequest;
-import com.fashionstore.fashionstore.entity.Order;
+import com.fashionstore.fashionstore.common.ApiResponse;
+import com.fashionstore.fashionstore.common.MessageConstants;
+import com.fashionstore.fashionstore.dto.AdminOrderResponse;
+import com.fashionstore.fashionstore.dto.OrderResponse;
+import com.fashionstore.fashionstore.dto.PlaceOrderRequest;
 import com.fashionstore.fashionstore.service.OrderService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,37 +16,78 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    @Autowired
-    private OrderService orderService;
 
-    @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public String placeOrder(@Valid @RequestBody OrderRequest request){
-        return orderService.placeOrder(request);
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    // ================= CUSTOMER =================
+
+    @PostMapping("/place")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(
+            @Valid @RequestBody PlaceOrderRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        MessageConstants.ORDER_PLACED,
+                        orderService.placeOrder(request)
+                )
+        );
     }
 
     @GetMapping("/my-orders")
-    @PreAuthorize("isAuthenticated()")
-    public List<Order> getMyOrders() {
-        return orderService.getMyOrders();
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMyOrders() {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        MessageConstants.ORDERS_FETCHED,
+                        orderService.getMyOrders()
+                )
+        );
     }
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<Order> getAllOrders(){
-        return orderService.getAllOrders();
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrderById(
+            @PathVariable Long orderId) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        MessageConstants.ORDER_FETCHED,
+                        orderService.getOrderById(orderId)
+                )
+        );
     }
 
-    @GetMapping("{id}")
+    // ================= ADMIN =================
+
+    @GetMapping("/admin/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public Order getOrderById(@PathVariable Long id){
-        return orderService.getOrderById(id);
+    public ResponseEntity<ApiResponse<List<AdminOrderResponse>>> getAllOrders() {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        MessageConstants.ORDERS_FETCHED,
+                        orderService.getAllOrders()
+                )
+        );
     }
 
-    @PatchMapping("/{id}/status")
+    @PutMapping("/admin/{orderId}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public String updateOrderStatus(@PathVariable Long id, @Valid @RequestBody UpdateOrderStatusRequest request){
-        return orderService.updateOrderStatus(id, request);
+    public ResponseEntity<ApiResponse<Void>> updateStatus(
+            @PathVariable Long orderId,
+            @RequestParam String status) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        orderService.updateOrderStatus(orderId, status)
+                )
+        );
     }
 
 }

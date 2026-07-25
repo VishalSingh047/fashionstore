@@ -1,5 +1,6 @@
 package com.fashionstore.fashionstore.service.impl;
 
+import com.fashionstore.fashionstore.common.MessageConstants;
 import com.fashionstore.fashionstore.entity.UserAccount;
 import com.fashionstore.fashionstore.repository.UserAccountRepository;
 import com.fashionstore.fashionstore.security.UserPrincipal;
@@ -16,7 +17,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
-        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(MessageConstants.USER_NOT_FOUND));
 
         return new UserPrincipal(user);
     }

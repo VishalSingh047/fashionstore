@@ -1,5 +1,6 @@
 package com.fashionstore.fashionstore.service.impl;
 
+import com.fashionstore.fashionstore.common.MessageConstants;
 import com.fashionstore.fashionstore.dto.ProductRequest;
 import com.fashionstore.fashionstore.dto.ProductResponse;
 import com.fashionstore.fashionstore.dto.UpdateProductRequest;
@@ -59,7 +60,7 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(product);
 
-        return "Product Added Successfully";
+        return MessageConstants.PRODUCT_CREATED;
     }
 
 
@@ -80,7 +81,7 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("Product not found")
+                        () -> new ResourceNotFoundException(MessageConstants.PRODUCT_NOT_FOUND)
                 );
 
         return mapToResponse(product);
@@ -91,7 +92,7 @@ public class ProductServiceImpl implements ProductService {
     public String updateProduct(Long id, UpdateProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Product not found"));
+                        new ResourceNotFoundException(MessageConstants.PRODUCT_NOT_FOUND));
 
         if (request.getProductName() != null)
             product.setProductName(request.getProductName());
@@ -134,7 +135,7 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(product);
 
-        return "Product updated successfully";
+        return MessageConstants.PRODUCT_UPDATED;
     }
 
 
@@ -143,13 +144,13 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("Product not found")
+                        () -> new ResourceNotFoundException(MessageConstants.PRODUCT_NOT_FOUND)
                 );
 
 
         productRepository.delete(product);
 
-        return "Product deleted successfully";
+        return MessageConstants.PRODUCT_DELETED;
     }
 
 

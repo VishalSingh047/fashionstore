@@ -1,6 +1,7 @@
 package com.fashionstore.fashionstore.config;
 
 import com.fashionstore.fashionstore.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,15 +32,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 //                .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/users/register", "/api/users/login").permitAll()
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                }).accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                }))
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/users/register", "/api/users/login")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/products/**").permitAll()   //   Public APIs   -----
+                        .anyRequest().authenticated())    //   Everything else Require's JWT   -----
 
-//--------------------------------------------   Public APIs   -------------------------------------------------
-                        .requestMatchers(HttpMethod.GET,"/api/products/**").permitAll()
-
-//--------------------------------------------   Everything else Require's JWT   -------------------------------------------------
-                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

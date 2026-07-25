@@ -1,5 +1,6 @@
 package com.fashionstore.fashionstore.service.impl;
 
+import com.fashionstore.fashionstore.common.MessageConstants;
 import com.fashionstore.fashionstore.dto.*;
 import com.fashionstore.fashionstore.entity.UserAccount;
 import com.fashionstore.fashionstore.enums.Role;
@@ -40,7 +41,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         userAccountRepository.save(user);
 
-        return "Registered Successfully";
+        return MessageConstants.REGISTER_SUCCESS;
     }
 
     @Override
@@ -64,7 +65,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         String email = authentication.getName();
 
-        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found"));
+        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(() -> new RuntimeException(MessageConstants.USER_NOT_FOUND));
 
         return new UserProfileResponse(
                 user.getId(),
@@ -73,7 +74,6 @@ public class UserAccountServiceImpl implements UserAccountService {
                 user.getPhone(),
                 user.getRole()
         );
-
     }
 
     @Override
@@ -88,7 +88,7 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         // Fetch User
         UserAccount user = userAccountRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new RuntimeException(MessageConstants.USER_NOT_FOUND));
 
         // Update Details
         user.setFullName(request.getFullName());
@@ -97,7 +97,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         // Save Updated User
         userAccountRepository.save(user);
 
-        return "Profile updated successfully";
+        return MessageConstants.PROFILE_UPDATED;
     }
 
     @Override
@@ -110,7 +110,7 @@ public class UserAccountServiceImpl implements UserAccountService {
         String email = authentication.getName();
 
         UserAccount user = userAccountRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+                .orElseThrow(() -> new RuntimeException(MessageConstants.USER_NOT_FOUND));
 
         // Verify current password
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -127,6 +127,6 @@ public class UserAccountServiceImpl implements UserAccountService {
 
         userAccountRepository.save(user);
 
-        return "Password changed successfully";
+        return MessageConstants.PASSWORD_CHANGED;
     }
 }

@@ -2,7 +2,10 @@ package com.fashionstore.fashionstore.entity;
 
 import com.fashionstore.fashionstore.enums.OrderStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -20,28 +23,22 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Customer Details
-    private String customerName;
-    private String customerEmail;
-    private String customerPhone;
+    // Customer who placed the order
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserAccount user;
 
-    // Delivery Details
-    private String deliveryAddress;
-
-    // Product Details
-    private Long productId;
-
-    private String productName;
-
-    private BigDecimal price;
-
-    private Integer quantity;
-
+    // Total order amount
+    @Column(nullable = false)
     private BigDecimal totalAmount;
 
+    // Current order status
     @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus;
+    @Column(nullable = false)
+    private OrderStatus status = OrderStatus.PENDING;
 
+    // Date & Time
     @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime orderedAt;
 }

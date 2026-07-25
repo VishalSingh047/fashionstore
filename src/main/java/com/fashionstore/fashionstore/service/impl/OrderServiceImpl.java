@@ -1,112 +1,273 @@
 package com.fashionstore.fashionstore.service.impl;
 
-import com.fashionstore.fashionstore.dto.OrderRequest;
-import com.fashionstore.fashionstore.dto.UpdateOrderStatusRequest;
-import com.fashionstore.fashionstore.entity.Order;
-import com.fashionstore.fashionstore.entity.Product;
-import com.fashionstore.fashionstore.entity.UserAccount;
+import com.fashionstore.fashionstore.common.MessageConstants;
+import com.fashionstore.fashionstore.dto.AdminOrderResponse;
+import com.fashionstore.fashionstore.dto.OrderItemResponse;
+import com.fashionstore.fashionstore.dto.OrderResponse;
+import com.fashionstore.fashionstore.dto.PlaceOrderRequest;
+import com.fashionstore.fashionstore.entity.*;
 import com.fashionstore.fashionstore.enums.OrderStatus;
 import com.fashionstore.fashionstore.exception.ResourceNotFoundException;
-import com.fashionstore.fashionstore.repository.OrderRepository;
-import com.fashionstore.fashionstore.repository.ProductRepository;
-import com.fashionstore.fashionstore.repository.UserAccountRepository;
+import com.fashionstore.fashionstore.repository.*;
+import com.fashionstore.fashionstore.security.UserPrincipal;
 import com.fashionstore.fashionstore.service.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductRepository productRepository;
+    private final UserAccountRepository userAccountRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
+    public OrderServiceImpl(
+            OrderRepository orderRepository,
+            OrderItemRepository orderItemRepository,
+            CartRepository cartRepository,
+            CartItemRepository cartItemRepository,
+            ProductRepository productRepository,
+            UserAccountRepository userAccountRepository
+    ) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.productRepository = productRepository;
+        this.userAccountRepository = userAccountRepository;
+    }
 
+    private UserAccount getLoggedInUser() {
 
-    @Autowired
-    private UserAccountRepository userAccountRepository;
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        return userAccountRepository.findByEmail(principal.getUsername())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(MessageConstants.USER_NOT_FOUND));
+    }
 
     @Override
-    public String placeOrder(OrderRequest request) {
+    @Transactional
+    public OrderResponse placeOrder(PlaceOrderRequest request) {
 
-        // Get Logged-in User Email from JWT
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
+        UserAccount user = getLoggedInUser();
 
-        // Fetch Logged-in User
-        UserAccount user = userAccountRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(MessageConstants.CART_NOT_FOUND));
 
-        // Fetch Product
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product Not Found"));
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
 
-        // Calculate Total Amount
-        BigDecimal totalAmount = product.getPrice()
-                .multiply(BigDecimal.valueOf(request.getQuantity()));
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("Cart is empty.");
+        }
+
+        // Calculate total first
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (CartItem cartItem : cartItems) {
+            totalAmount = totalAmount.add(cartItem.getProduct().getPrice());
+        }
 
         // Create Order
         Order order = new Order();
-
-        order.setCustomerName(user.getFullName());
-        order.setCustomerEmail(user.getEmail());
-        order.setCustomerPhone(user.getPhone());
-
-        order.setDeliveryAddress(request.getDeliveryAddress());
-
-        order.setProductId(product.getId());
-        order.setProductName(product.getProductName());
-        order.setPrice(product.getPrice());
-
-        order.setQuantity(request.getQuantity());
+        order.setUser(user);
+        order.setStatus(OrderStatus.PENDING);
         order.setTotalAmount(totalAmount);
 
-        order.setOrderStatus(OrderStatus.PENDING);
+        order = orderRepository.save(order);
 
-        orderRepository.save(order);
+        List<OrderItemResponse> responses = new ArrayList<>();
 
-        return "Order placed successfully";
+        // Create Order Items
+        for (CartItem cartItem : cartItems) {
+
+            Product product = cartItem.getProduct();
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setPrice(product.getPrice());
+
+            orderItemRepository.save(orderItem);
+
+            // Mark product unavailable
+            product.setStock(0);
+            product.setSoldOut(true);
+            product.setActive(false);
+
+            productRepository.save(product);
+
+            responses.add(
+                    new OrderItemResponse(
+                            product.getId(),
+                            product.getProductName(),
+                            product.getImgUrl(),
+                            product.getPrice()
+                    )
+            );
+        }
+
+        // Empty Cart
+        cartItemRepository.deleteByCart(cart);
+
+        return new OrderResponse(
+                order.getId(),
+                responses,
+                totalAmount,
+                order.getStatus(),
+                order.getOrderedAt()
+        );
     }
 
     @Override
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public List<OrderResponse> getMyOrders() {
+
+        UserAccount user = getLoggedInUser();
+        List<Order> orders = orderRepository.findByUserOrderByOrderedAtDesc(user);
+
+        List<OrderResponse> responses = new ArrayList<>();
+
+        for (Order order : orders) {
+            List<OrderItem> orderItems =
+                    orderItemRepository.findByOrder(order);
+
+            List<OrderItemResponse> itemResponses = new ArrayList<>();
+
+            for (OrderItem item : orderItems) {
+                itemResponses.add(
+                        new OrderItemResponse(
+                                item.getProduct().getId(),
+                                item.getProduct().getProductName(),
+                                item.getProduct().getImgUrl(),
+                                item.getPrice()
+                        ));
+            }
+
+            responses.add(
+                    new OrderResponse(
+                            order.getId(),
+                            itemResponses,
+                            order.getTotalAmount(),
+                            order.getStatus(),
+                            order.getOrderedAt()
+                    ));
+        }
+        return responses;
     }
 
     @Override
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
+    public OrderResponse getOrderById(Long orderId) {
+        UserAccount user = getLoggedInUser();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                MessageConstants.ORDER_NOT_FOUND));
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You are not allowed to view this order.");
+        }
+
+        List<OrderItem> orderItems =
+                orderItemRepository.findByOrder(order);
+
+        List<OrderItemResponse> itemResponses = new ArrayList<>();
+
+        for (OrderItem item : orderItems) {
+            itemResponses.add(
+                    new OrderItemResponse(
+                            item.getProduct().getId(),
+                            item.getProduct().getProductName(),
+                            item.getProduct().getImgUrl(),
+                            item.getPrice()
+                    ));
+        }
+        return new OrderResponse(
+                order.getId(),
+                itemResponses,
+                order.getTotalAmount(),
+                order.getStatus(),
+                order.getOrderedAt()
+        );
     }
 
     @Override
-    public String updateOrderStatus(Long id, UpdateOrderStatusRequest request) {
+    public List<AdminOrderResponse> getAllOrders() {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found"));
+        List<Order> orders = orderRepository.findAll();
 
-        order.setOrderStatus(request.getOrderStatus());
+        List<AdminOrderResponse> responses = new ArrayList<>();
 
-        orderRepository.save(order);
+        for (Order order : orders) {
 
-        return "Order status updated successfully";
+            List<OrderItem> orderItems =
+                    orderItemRepository.findByOrder(order);
+
+            List<OrderItemResponse> itemResponses = new ArrayList<>();
+
+            for (OrderItem item : orderItems) {
+
+                itemResponses.add(
+                        new OrderItemResponse(
+                                item.getProduct().getId(),
+                                item.getProduct().getProductName(),
+                                item.getProduct().getImgUrl(),
+                                item.getPrice()
+                        )
+                );
+            }
+
+            responses.add(
+                    new AdminOrderResponse(
+                            order.getId(),
+
+                            order.getUser().getId(),
+                            order.getUser().getFullName(),
+                            order.getUser().getEmail(),
+                            order.getUser().getPhone(),
+
+                            itemResponses,
+
+                            order.getTotalAmount(),
+                            order.getStatus(),
+                            order.getOrderedAt()
+                    )
+            );
+        }
+
+        return responses;
     }
 
     @Override
-    public List<Order> getMyOrders() {
+    @Transactional
+    public String updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                MessageConstants.ORDER_NOT_FOUND));
+        try {
+            OrderStatus orderStatus =
+                    OrderStatus.valueOf(status.toUpperCase());
+            order.setStatus(orderStatus);
 
-        Authentication authentication = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
+            orderRepository.save(order);
+            return MessageConstants.ORDER_STATUS_UPDATED;
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(MessageConstants.INVALID_ORDER_STATUS);
 
-        String email = authentication.getName();
-
-        return orderRepository.findByCustomerEmail(email);
+        }
     }
 }
