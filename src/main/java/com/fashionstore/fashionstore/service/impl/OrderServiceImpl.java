@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        PaymentStatus paymentStatus = (paymentMethod == PaymentMethod.COD) ? PaymentStatus.PENDING : PaymentStatus.PAID;
+        PaymentStatus paymentStatus = (paymentMethod == PaymentMethod.COD) ? PaymentStatus.PENDING : PaymentStatus.SUCCESS;
 
         // Create Order
         Order order = new Order();
@@ -276,7 +276,7 @@ public class OrderServiceImpl implements OrderService {
                     OrderStatus.valueOf(status.toUpperCase());
             order.setStatus(orderStatus);
             if (orderStatus == OrderStatus.DELIVERED && order.getPaymentMethod() == PaymentMethod.COD) {
-                order.setPaymentStatus(PaymentStatus.PAID);
+                order.setPaymentStatus(PaymentStatus.SUCCESS);
             }
 
             orderRepository.save(order);

@@ -11,6 +11,9 @@ import java.math.BigDecimal;
 @Setter
 public class ProductRequest {
 
+    @NotBlank(message = "SKU is required")
+    private String sku;
+
     @NotBlank(message = "Product name is required")
     private String productName;
 
@@ -40,4 +43,6 @@ public class ProductRequest {
     private Boolean featured;
 
     private Boolean newArrival;
+
+
 }

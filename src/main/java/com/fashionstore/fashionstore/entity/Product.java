@@ -14,18 +14,25 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "products", indexes = {
-    @Index(name = "idx_product_category", columnList = "category"),
-    @Index(name = "idx_product_brand", columnList = "brand"),
-    @Index(name = "idx_product_price", columnList = "price"),
-    @Index(name = "idx_product_active", columnList = "active"),
-    @Index(name = "idx_product_sold_out", columnList = "soldOut")
-})
+@Table(name = "products",
+       indexes = {
+           @Index(name = "idx_product_category", columnList = "category"),
+           @Index(name = "idx_product_brand", columnList = "brand"),
+           @Index(name = "idx_product_price", columnList = "price"),
+           @Index(name = "idx_product_active", columnList = "active"),
+           @Index(name = "idx_product_sold_out", columnList = "soldOut")
+       },
+       uniqueConstraints = {@UniqueConstraint(columnNames = {"sku"})})
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Unique SKU to enforce single stock per product
+    @NotBlank(message = "SKU is required")
+    @Column(nullable = false, unique = true)
+    private String sku;
 
     // Basic Information
 
@@ -54,7 +61,7 @@ public class Product {
     // Single Piece Inventory
 
     @NotNull(message = "Stock is required")
-    private Integer stock;
+    private Integer stock = 1;
 
     private Boolean soldOut = false;
 

@@ -2,6 +2,7 @@ package com.fashionstore.fashionstore.enums;
 
 public enum PaymentStatus {
     PENDING,
-    PAID,
-    FAILED
+    SUCCESS,
+    FAILED,
+    REFUNDED
 }

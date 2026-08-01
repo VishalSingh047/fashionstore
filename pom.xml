@@ -98,7 +98,33 @@
 			<version>0.12.7</version>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- Flyway Migration -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+
+		<!-- Actuator and Micrometer -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
+<!--		RazorPay Dependency-->
+
+<!--		<dependency>-->
+<!--			<groupId>com.razorpay</groupId>-->
+<!--			<artifactId>razorpay-java</artifactId>-->
+<!--			<version>1.4.9</version>-->
+<!--		</dependency>-->
 	</dependencies>
+
 
 	<build>
 		<plugins>
