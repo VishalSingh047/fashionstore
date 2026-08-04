@@ -17,6 +17,11 @@ import java.util.List;
 @RequestMapping("/api/orders")
 public class OrderController {
 
+    @GetMapping("/test")
+    public String test() {
+        return "ORDER CONTROLLER WORKING";
+    }
+
     private final OrderService orderService;
 
     public OrderController(OrderService orderService) {

@@ -1,6 +1,8 @@
 package com.fashionstore.fashionstore.security;
 
 import com.fashionstore.fashionstore.service.impl.CustomUserDetailsService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,20 +38,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String email = jwtService.extractEmail(token);
 
-        if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+        try {
+            String email = jwtService.extractEmail(token);
+            if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
+                UserDetails userDetails =
+                        customUserDetailsService.loadUserByUsername(email);
 
-            if(jwtService.isTokenValid(token, userDetails.getUsername())){
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                if(jwtService.isTokenValid(token, userDetails.getUsername())){
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authentication);
+                }
             }
+
+        }
+        catch (ExpiredJwtException e){
+            System.out.println("JWT expired: " + e.getMessage());
+        }
+        catch (JwtException e){
+            System.out.println("Invalid JWT: " + e.getMessage());
         }
 
-        filterChain.doFilter(request, response);
-    }
+        filterChain.doFilter(request, response);    }
 }

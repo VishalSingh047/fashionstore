@@ -14,6 +14,9 @@ import com.fashionstore.fashionstore.repository.*;
 import com.fashionstore.fashionstore.security.UserPrincipal;
 import com.fashionstore.fashionstore.service.OrderService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -68,8 +71,11 @@ public class OrderServiceImpl implements OrderService {
         UserAccount user = getLoggedInUser();
 
         Cart cart = cartRepository.findByUser(user)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(MessageConstants.CART_NOT_FOUND));
+                .orElseGet(() -> {
+                    Cart newCart = new Cart();
+                    newCart.setUser(user);
+                    return cartRepository.save(newCart);
+                });
 
         List<CartItem> cartItems = cartItemRepository.findByCart(cart);
 
@@ -127,10 +133,15 @@ public class OrderServiceImpl implements OrderService {
             orderItemRepository.save(orderItem);
 
             // Mark product unavailable
-            product.setStock(0);
-            product.setSoldOut(true);
-            product.setActive(false);
+            int newStock = product.getStock() - 1;
 
+            product.setStock(newStock);
+
+            if (newStock <= 0) {
+                product.setStock(0);
+                product.setSoldOut(true);
+                product.setActive(false);
+            }
             productRepository.save(product);
 
             responses.add(
@@ -262,6 +273,67 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return responses;
+    }
+
+    @Override
+    public Page<AdminOrderResponse> getAllOrders(Pageable pageable) {
+
+        Page<Order> orders = orderRepository.findAll(pageable);
+
+        List<AdminOrderResponse> responses = new ArrayList<>();
+
+        for (Order order : orders) {
+
+            List<OrderItem> orderItems =
+                    orderItemRepository.findByOrder(order);
+
+            List<OrderItemResponse> itemResponses = new ArrayList<>();
+
+            for (OrderItem item : orderItems) {
+
+                itemResponses.add(
+                        new OrderItemResponse(
+                                item.getProduct().getId(),
+                                item.getProduct().getProductName(),
+                                item.getProduct().getImgUrl(),
+                                item.getPrice()
+                        )
+                );
+            }
+
+            responses.add(
+                    new AdminOrderResponse(
+                            order.getId(),
+
+                            order.getUser().getId(),
+                            order.getUser().getFullName(),
+                            order.getUser().getEmail(),
+                            order.getUser().getPhone(),
+
+                            order.getShippingFullName(),
+                            order.getShippingPhone(),
+                            order.getShippingAddress(),
+                            order.getCity(),
+                            order.getState(),
+                            order.getPincode(),
+
+                            order.getPaymentMethod(),
+                            order.getPaymentStatus(),
+
+                            itemResponses,
+
+                            order.getTotalAmount(),
+                            order.getStatus(),
+                            order.getOrderedAt()
+                    )
+            );
+        }
+
+        return new PageImpl<>(
+                responses,
+                pageable,
+                orders.getTotalElements()
+        );
     }
 
     @Override

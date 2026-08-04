@@ -29,6 +29,6 @@ public class CartItem {
     private Product product;
 
     // Quantity
-//    @Column(nullable = false)
-//    private Integer quantity = 1;
+    @Column(nullable = false)
+    private Integer quantity = 1;
 }

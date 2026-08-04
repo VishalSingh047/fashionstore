@@ -13,9 +13,13 @@ import com.fashionstore.fashionstore.repository.UserAccountRepository;
 import com.fashionstore.fashionstore.service.AdminDashboardService;
 import com.fashionstore.fashionstore.service.OrderService;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,23 +77,43 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     public SalesAnalyticsResponse getAnalytics() {
+
         AdminDashboardStatsResponse stats = getDashboardStats();
 
         List<Order> orders = orderRepository.findAll();
+
         Map<OrderStatus, Long> statusCounts = orders.stream()
-                .collect(Collectors.groupingBy(Order::getStatus, Collectors.counting()));
+                .filter(order -> order.getStatus() != null)
+                .collect(
+                        Collectors.groupingBy(
+                                Order::getStatus,
+                                Collectors.counting()
+                        )
+                );
 
         List<OrderStatusDistribution> breakdown = new ArrayList<>();
+
         for (OrderStatus status : OrderStatus.values()) {
-            breakdown.add(new OrderStatusDistribution(status, statusCounts.getOrDefault(status, 0L)));
+            breakdown.add(
+                    new OrderStatusDistribution(
+                            status,
+                            statusCounts.getOrDefault(status, 0L)
+                    )
+            );
         }
 
-        List<AdminOrderResponse> allOrders = orderService.getAllOrders();
-        List<AdminOrderResponse> recentOrders = allOrders.stream()
-                .sorted((a, b) -> b.getOrderedAt().compareTo(a.getOrderedAt()))
-                .limit(10)
-                .toList();
+        Pageable pageable = PageRequest.of(0, 10);
 
-        return new SalesAnalyticsResponse(stats, breakdown, recentOrders);
+        Page<AdminOrderResponse> orderPage =
+                orderService.getAllOrders(pageable);
+
+        List<AdminOrderResponse> recentOrders =
+                orderPage.getContent();
+
+        return new SalesAnalyticsResponse(
+                stats,
+                breakdown,
+                recentOrders
+        );
     }
 }

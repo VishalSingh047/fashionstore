@@ -34,7 +34,8 @@ public class ProductRequest {
 
     private Integer discount;
 
-    private Integer stock;
+    @NotNull(message = "Stock is required")
+    private Integer stock = 1;
 
     private String size;
 

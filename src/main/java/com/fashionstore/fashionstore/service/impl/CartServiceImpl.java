@@ -105,8 +105,10 @@ public class CartServiceImpl implements CartService {
             throw new DuplicateResourceException(MessageConstants.PRODUCT_ALREADY_IN_CART);
         }
         cartItem = new CartItem();
+
         cartItem.setCart(cart);
         cartItem.setProduct(product);
+        cartItem.setQuantity(1);
 
         cartItemRepository.save(cartItem);
         return MessageConstants.PRODUCT_ADDED_TO_CART;
@@ -130,16 +132,13 @@ public class CartServiceImpl implements CartService {
         int totalItems = 0;
 
         for (CartItem item : cartItems) {
+
             BigDecimal subTotal = item.getProduct()
-                            .getPrice();
-//                            .multiply(BigDecimal.valueOf(item.getQuantity()));
+                    .getPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity()));
 
             totalAmount = totalAmount.add(subTotal);
-
-
-//            totalItems += item.getQuantity();
-
-            totalItems++;
+            totalItems += item.getQuantity();
 
             itemResponses.add(
                     new CartItemResponse(
@@ -147,8 +146,7 @@ public class CartServiceImpl implements CartService {
                             item.getProduct().getProductName(),
                             item.getProduct().getPrice(),
                             item.getProduct().getImgUrl(),
-//                            item.getQuantity(),
-
+                            item.getQuantity(),
                             subTotal
                     )
             );

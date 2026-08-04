@@ -75,6 +75,20 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success(productService.updateProduct(id, request)));
     }
 
+    @PutMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<String>> updateStock(
+            @PathVariable Long id,
+            @RequestParam Integer quantity
+    ){
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        productService.updateStock(id, quantity)
+                )
+        );
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProduct(

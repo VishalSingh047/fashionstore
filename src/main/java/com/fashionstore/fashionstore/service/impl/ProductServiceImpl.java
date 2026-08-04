@@ -228,4 +228,25 @@ public class ProductServiceImpl implements ProductService {
                 product.getCreatedAt()
         );
     }
+
+    @Override
+    public String updateStock(Long id, Integer quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                MessageConstants.PRODUCT_NOT_FOUND
+                        )
+                );
+        int updatedStock = product.getStock() + quantity;
+
+        if(updatedStock < 0){
+            updatedStock = 0;
+        }
+
+        product.setStock(updatedStock);
+        product.setSoldOut(updatedStock == 0);
+
+        productRepository.save(product);
+        return "Stock updated successfully";
+    }
 }

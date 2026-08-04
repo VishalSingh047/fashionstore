@@ -35,4 +35,6 @@ public interface ProductService {
     String updateProduct(Long id, UpdateProductRequest request);
 
     String deleteProduct(Long id);
+
+    String updateStock(Long id, Integer quantity);
 }
