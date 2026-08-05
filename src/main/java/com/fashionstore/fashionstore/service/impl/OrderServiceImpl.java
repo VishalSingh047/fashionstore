@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.fashionstore.fashionstore.dto.AdminPaymentResponse;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -87,7 +88,11 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (CartItem cartItem : cartItems) {
-            totalAmount = totalAmount.add(cartItem.getProduct().getPrice());
+            totalAmount = totalAmount.add(
+                    cartItem.getProduct()
+                            .getPrice()
+                            .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
+            );
         }
 
         // Parse Payment Method
@@ -375,5 +380,26 @@ public class OrderServiceImpl implements OrderService {
                 order.getPaymentStatus(),
                 order.getOrderedAt()
         );
+    }
+
+    @Override
+    public List<AdminPaymentResponse> getAllPayments() {
+        List<Order> orders = orderRepository.findAll();
+        List<AdminPaymentResponse> responses = new ArrayList<>();
+
+        for(Order order : orders){
+            responses.add(
+                    new AdminPaymentResponse(
+                            order.getId(),
+                            order.getUser().getFullName(),
+                            order.getUser().getEmail(),
+                            order.getTotalAmount(),
+                            order.getPaymentMethod(),
+                            order.getPaymentStatus(),
+                            order.getOrderedAt()
+                    )
+            );
+        }
+        return responses;
     }
 }

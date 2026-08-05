@@ -1,6 +1,7 @@
 package com.fashionstore.fashionstore.service;
 
 import com.fashionstore.fashionstore.dto.AdminOrderResponse;
+import com.fashionstore.fashionstore.dto.AdminPaymentResponse;
 import com.fashionstore.fashionstore.dto.OrderResponse;
 import com.fashionstore.fashionstore.dto.PlaceOrderRequest;
 import org.springframework.data.domain.Page;
@@ -24,5 +25,6 @@ public interface OrderService {
 
     String updateOrderStatus(Long orderId, String status);
 
+    List<AdminPaymentResponse> getAllPayments();
 
 }

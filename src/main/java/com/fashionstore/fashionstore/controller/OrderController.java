@@ -3,6 +3,7 @@ package com.fashionstore.fashionstore.controller;
 import com.fashionstore.fashionstore.common.ApiResponse;
 import com.fashionstore.fashionstore.common.MessageConstants;
 import com.fashionstore.fashionstore.dto.AdminOrderResponse;
+import com.fashionstore.fashionstore.dto.AdminPaymentResponse;
 import com.fashionstore.fashionstore.dto.OrderResponse;
 import com.fashionstore.fashionstore.dto.PlaceOrderRequest;
 import com.fashionstore.fashionstore.service.OrderService;
@@ -78,6 +79,18 @@ public class OrderController {
                 ApiResponse.success(
                         MessageConstants.ORDERS_FETCHED,
                         orderService.getAllOrders()
+                )
+        );
+    }
+
+    @GetMapping("/admin/payments")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<AdminPaymentResponse>>> getAllPayments(){
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        MessageConstants.ORDERS_FETCHED,
+                        orderService.getAllPayments()
                 )
         );
     }
